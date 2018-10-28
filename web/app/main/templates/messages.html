@@ -1,0 +1,11 @@
+{% if messages %}
+    {% for message in messages %}
+        <div d="notification-{{ forloop.counter }}" data-role="alert-auto-close"
+             class="top-notification alert alert-dismissible
+                    alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span></button>
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}

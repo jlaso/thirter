@@ -1,0 +1,4 @@
+.env
+web/.env
+__pycache__
+web/app/tools

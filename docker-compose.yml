@@ -1,0 +1,77 @@
+version: "2"
+
+networks:
+  web:
+    external: true
+  tshirter_default: ~
+
+services:
+
+    db:
+      image: postgres
+      restart: always
+      networks:
+        - tshirter_default
+      volumes:
+        - /opt/data/tshirter/postgres:/var/lib/postgresql/data
+        - /opt/data/tshirter/postgres-backup:/root/backup
+      ports:
+        - "15432:5432"
+
+    web:
+      restart: always
+      build:
+        context: ./web
+        args:
+          TIMEZONE: ${TIMEZONE}
+      expose:
+        - "8000"
+      networks:
+        - tshirter_default
+      volumes:
+        - /usr/src/app
+        - ./web:/usr/src/app
+        - /opt/data/tshirter/home/root:/root
+      env_file: .env
+      environment:
+        DEBUG: 'true'
+      command: /usr/local/bin/gunicorn app.wsgi:application -w 1 -b :8000 --reload
+
+    nginx:
+      restart: always
+      build: ./nginx/
+      ports:
+        - "8080:80"
+      volumes_from:
+        - web
+      links:
+        - web:web
+      networks:
+        - web
+        - tshirter_default
+      labels:
+        - "traefik.backend=tshirter"
+        - "traefik.frontend.rule=Host:tshirter.local"
+        - "traefik.frontend.entrypoints=http"
+        - "traefik.docker.network=web"
+        - "traefik.enable=true"
+        - "traefik.port=80"
+        - "traefik.default.protocol=http"
+
+    adminer:
+      image: adminer
+      restart: always
+      networks:
+        - tshirter_default
+      ports:
+        - 8888:8080
+
+    redis:
+      build: redis
+      networks:
+        - tshirter_default
+      ports:
+        - 6379:6379
+      restart: always
+
+
